@@ -157,9 +157,30 @@ services:
       retries: 10
       start_period: 15s
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: unifyhr-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      employee-service:
+        condition: service_healthy
+      attendance-service:
+        condition: service_healthy
+      payroll-service:
+        condition: service_healthy
+    networks:
+      - unifyhr-net
+
 volumes:
   mysql_data:
 
 networks:
   unifyhr-net:
     driver: bridge
+

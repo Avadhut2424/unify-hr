@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UnifyHR — Enterprise Microservices Management Portal</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            dark: {
+              900: '#0b0f19',
+              800: '#111827',
+              700: '#1f2937',
+              600: '#374151',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f3f4f6; }
+    .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(23, 32, 51, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .glow-indigo { box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.35); }
+    .glow-cyan { box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35); }
+    .glow-emerald { box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOPBAR -->
+  <header class="sticky top-0 z-40 glass border-b border-gray-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- LOGO & BRAND -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-layer-group text-white text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400">UnifyHR</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-indigo-950 text-indigo-400 border border-indigo-700/50">v1.0</span>
+          </div>
+          <span class="text-xs text-gray-400 hidden sm:inline-block">Microservices Enterprise Platform</span>
+        </div>
+      </div>
+
+      <!-- SERVICE CLUSTER STATUS LIGHTS -->
+      <div class="hidden md:flex items-center space-x-4 bg-gray-900/60 px-3 py-1.5 rounded-full border border-gray-800 text-xs">
+        <div class="flex items-center space-x-1.5" title="Auth Service (:8081)">
+          <span id="health-auth-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-gray-300">Auth</span>
+        </div>
+        <div class="flex items-center space-x-1.5" title="Employee Service (:8082)">
+          <span id="health-emp-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-gray-300">Employee</span>
+        </div>
+        <div class="flex items-center space-x-1.5" title="Attendance Service (:8083)">
+          <span id="health-att-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-gray-300">Attendance</span>
+        </div>
+        <div class="flex items-center space-x-1.5" title="Payroll Service (:8084)">
+          <span id="health-pay-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-gray-300">Payroll</span>
+        </div>
+      </div>
+
+      <!-- USER PROFILE & RBAC SWITCHER -->
+      <div class="flex items-center space-x-3">
+        <div id="auth-status-container" class="flex items-center space-x-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-gray-900/40 border-b border-gray-800/60 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 sm:space-x-4 overflow-x-auto py-2.5">
+      <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-btn active px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600/90 flex items-center space-x-2 transition">
+        <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+      </button>
+      <button onclick="switchTab('employees')" id="tab-btn-employees" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center space-x-2 transition">
+        <i class="fa-solid fa-users"></i><span>Employees</span>
+      </button>
+      <button onclick="switchTab('attendance')" id="tab-btn-attendance" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center space-x-2 transition">
+        <i class="fa-solid fa-calendar-check"></i><span>Attendance</span>
+      </button>
+      <button onclick="switchTab('payroll')" id="tab-btn-payroll" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center space-x-2 transition">
+        <i class="fa-solid fa-money-bill-wave"></i><span>Payroll</span>
+      </button>
+      <button onclick="switchTab('infrastructure')" id="tab-btn-infrastructure" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center space-x-2 transition">
+        <i class="fa-solid fa-server"></i><span>Cluster Health</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- 1. DASHBOARD VIEW -->
+    <section id="view-dashboard" class="tab-view space-y-8">
+      <!-- HERO BANNER -->
+      <div class="relative overflow-hidden rounded-2xl glass p-6 sm:p-8 bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-gray-900 border border-indigo-500/20">
+        <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span>
+              <span>Cluster Live &amp; Fully Synchronized</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">HR &amp; Payroll Enterprise Cockpit</h1>
+            <p class="text-gray-400 text-sm mt-1 max-w-2xl">
+              Real-time telemetry across Auth, Employee Directory (1,000+ records), Multithreaded Attendance Engine, and Dynamic Payroll Calculator.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="triggerAbsenteeJob()" class="px-4 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold border border-gray-700 flex items-center space-x-2 transition shadow-lg">
+              <i class="fa-solid fa-bolt text-amber-400"></i>
+              <span>Trigger Absentee Worker</span>
+            </button>
+            <button onclick="openAddEmployeeModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 flex items-center space-x-2 transition">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Add Employee</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI METRIC STAT CARDS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="glass-card rounded-2xl p-5 hover:border-indigo-500/40 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Headcount</span>
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+              <i class="fa-solid fa-users text-base"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span id="kpi-total-employees" class="text-3xl font-extrabold text-white">1,000+</span>
+            <span class="text-xs text-emerald-400 font-semibold flex items-center"><i class="fa-solid fa-arrow-trend-up mr-1"></i>Active</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Managed via Employee Service</p>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 hover:border-emerald-500/40 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Today's Attendance</span>
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+              <i class="fa-solid fa-clipboard-user text-base"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span id="kpi-attendance-rate" class="text-3xl font-extrabold text-white">98.2%</span>
+            <span class="text-xs text-emerald-400 font-semibold">Auto-Synced</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Multi-threaded absentee check active</p>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 hover:border-cyan-500/40 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">System Availability</span>
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+              <i class="fa-solid fa-heart-pulse text-base"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span class="text-3xl font-extrabold text-cyan-400">99.997%</span>
+            <span class="text-xs text-gray-400">SLA Met</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Benchmark verified in Phase 10</p>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 hover:border-purple-500/40 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cluster Services</span>
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+              <i class="fa-solid fa-cubes text-base"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span class="text-3xl font-extrabold text-white">4 / 4</span>
+            <span class="text-xs text-emerald-400 font-semibold flex items-center"><i class="fa-solid fa-check-circle mr-1"></i>Healthy</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">MySQL 8 &amp; Adminer Online</p>
+        </div>
+      </div>
+
+      <!-- CHARTS SECTION -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-bold text-white">Department Headcount Distribution</h2>
+              <p class="text-xs text-gray-400">Live employee distribution across departments</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-md bg-gray-800 text-gray-300 font-medium">Auto-aggregated</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chart-departments"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-bold text-white">Attendance Ratio</h2>
+              <p class="text-xs text-gray-400">Present vs Absent logs</p>
+            </div>
+            <i class="fa-solid fa-chart-pie text-gray-400"></i>
+          </div>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="chart-attendance"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. EMPLOYEES DIRECTORY VIEW -->
+    <section id="view-employees" class="tab-view hidden space-y-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Employee Directory</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Browse, search, and manage 1,000+ employee records</p>
+        </div>
+        <div class="flex items-center space-x-3 w-full sm:w-auto">
+          <div class="relative flex-1 sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-xs"></i>
+            <input type="text" id="employee-search-input" onkeyup="filterEmployees()" placeholder="Search by name, email, role..." class="w-full pl-9 pr-3 py-2 bg-gray-900/80 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <select id="department-filter" onchange="filterEmployees()" class="bg-gray-900/80 border border-gray-800 rounded-xl text-xs text-gray-300 px-3 py-2 focus:outline-none focus:border-indigo-500">
+            <option value="ALL">All Departments</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Human Resources">Human Resources</option>
+            <option value="Finance">Finance</option>
+            <option value="Operations">Operations</option>
+            <option value="Product">Product</option>
+          </select>
+          <button onclick="openAddEmployeeModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5 whitespace-nowrap">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- EMPLOYEES TABLE -->
+      <div class="glass-card rounded-2xl overflow-hidden border border-gray-800">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-900/80 border-b border-gray-800 text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
+                <th class="py-3.5 px-4">ID</th>
+                <th class="py-3.5 px-4">Employee</th>
+                <th class="py-3.5 px-4">Department</th>
+                <th class="py-3.5 px-4">Designation</th>
+                <th class="py-3.5 px-4">Salary</th>
+                <th class="py-3.5 px-4">Status</th>
+                <th class="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="employees-table-body" class="divide-y divide-gray-800/60 text-xs">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+        <!-- PAGINATION BAR -->
+        <div class="p-4 bg-gray-900/60 border-t border-gray-800 flex items-center justify-between text-xs text-gray-400">
+          <div>Showing <span id="emp-page-start" class="font-semibold text-white">0</span> to <span id="emp-page-end" class="font-semibold text-white">0</span> of <span id="emp-page-total" class="font-semibold text-white">0</span> records</div>
+          <div class="flex items-center space-x-2">
+            <button onclick="prevEmployeePage()" id="emp-prev-btn" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-40 transition">Previous</button>
+            <button onclick="nextEmployeePage()" id="emp-next-btn" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-40 transition">Next</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. ATTENDANCE VIEW -->
+    <section id="view-attendance" class="tab-view hidden space-y-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Attendance Tracking &amp; Automation</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Automated @Scheduled multithreaded worker &amp; manual status logger</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="triggerAbsenteeJob()" class="px-4 py-2 rounded-xl bg-amber-600/20 text-amber-300 border border-amber-500/30 hover:bg-amber-600/30 text-xs font-semibold flex items-center space-x-2 transition">
+            <i class="fa-solid fa-robot"></i>
+            <span>Run Absentee Thread Pool</span>
+          </button>
+          <button onclick="openMarkAttendanceModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-check"></i>
+            <span>Mark Attendance</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-4 glass-card rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-amber-500">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">Automated Concurrency Engine</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Configured with Java 17 Fixed Thread Pool Executor to cross-reference 1,000+ employee logs asynchronously without request blocking.</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Non-blocking Thread Pool Active</span>
+        </div>
+
+        <div class="lg:col-span-4 glass-card rounded-2xl overflow-hidden border border-gray-800">
+          <div class="p-4 bg-gray-900/80 border-b border-gray-800 flex items-center justify-between">
+            <span class="text-xs font-bold text-white uppercase tracking-wider">Recent Attendance Records</span>
+            <button onclick="loadAttendance()" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center space-x-1"><i class="fa-solid fa-rotate-right"></i><span>Refresh</span></button>
+          </div>
+          <div class="overflow-x-auto max-h-96">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-900/60 border-b border-gray-800 text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
+                  <th class="py-3 px-4">Record ID</th>
+                  <th class="py-3 px-4">Employee ID</th>
+                  <th class="py-3 px-4">Date</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Marked By</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-table-body" class="divide-y divide-gray-800/60 text-xs">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PAYROLL VIEW -->
+    <section id="view-payroll" class="tab-view hidden space-y-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Payroll &amp; Compensation Engine</h2>
+          <p class="text-xs text-gray-400 mt-0.5">REST integration with Attendance Service to deduct penalties for absentees</p>
+        </div>
+        <button onclick="openGeneratePayrollModal()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-calculator"></i>
+          <span>Calculate &amp; Generate Payroll</span>
+        </button>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 border border-gray-800">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-white">Payroll History &amp; Slips</h3>
+            <p class="text-xs text-gray-400">Generated pay slips with breakdown</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <input type="number" id="payroll-search-emp-id" placeholder="Employee ID..." class="w-32 px-3 py-1.5 bg-gray-900/80 border border-gray-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
+            <button onclick="searchEmployeePayroll()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition">Fetch</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-900/60 border-b border-gray-800 text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
+                <th class="py-3 px-4">Payroll ID</th>
+                <th class="py-3 px-4">Employee ID</th>
+                <th class="py-3 px-4">Pay Period</th>
+                <th class="py-3 px-4">Base Salary</th>
+                <th class="py-3 px-4">Absent Deductions</th>
+                <th class="py-3 px-4">Net Payout</th>
+                <th class="py-3 px-4">Processed Date</th>
+              </tr>
+            </thead>
+            <tbody id="payroll-table-body" class="divide-y divide-gray-800/60 text-xs">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. CLUSTER HEALTH VIEW -->
+    <section id="view-infrastructure" class="tab-view hidden space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Cluster Infrastructure &amp; Topology</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Live container status, port bindings, and database telemetry</p>
+        </div>
+        <a href="http://localhost:8080" target="_blank" class="px-4 py-2 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-600/30 rounded-xl text-xs font-semibold flex items-center space-x-2 transition">
+          <i class="fa-solid fa-database"></i>
+          <span>Open Adminer DB Portal</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="glass-card rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-xs">01</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Auth Service</h4>
+                <span class="text-[10px] text-gray-400">Spring Boot 3.x + Spring Security</span>
+              </div>
+            </div>
+            <span id="card-status-auth" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">UP</span>
+          </div>
+          <div class="bg-gray-900/60 p-3 rounded-xl space-y-1.5 text-xs text-gray-400">
+            <div class="flex justify-between"><span>Container Port:</span><span class="font-mono text-gray-200">8081</span></div>
+            <div class="flex justify-between"><span>Database:</span><span class="font-mono text-gray-200">auth_db</span></div>
+            <div class="flex justify-between"><span>Auth Type:</span><span class="text-gray-200">JWT (HMAC-SHA256)</span></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">02</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Employee Service</h4>
+                <span class="text-[10px] text-gray-400">Spring Data JPA + REST</span>
+              </div>
+            </div>
+            <span id="card-status-emp" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">UP</span>
+          </div>
+          <div class="bg-gray-900/60 p-3 rounded-xl space-y-1.5 text-xs text-gray-400">
+            <div class="flex justify-between"><span>Container Port:</span><span class="font-mono text-gray-200">8082</span></div>
+            <div class="flex justify-between"><span>Database:</span><span class="font-mono text-gray-200">employee_db</span></div>
+            <div class="flex justify-between"><span>Scale Target:</span><span class="text-gray-200">1,000+ Records</span></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs">03</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Attendance Service</h4>
+                <span class="text-[10px] text-gray-400">@Scheduled + ExecutorService</span>
+              </div>
+            </div>
+            <span id="card-status-att" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">UP</span>
+          </div>
+          <div class="bg-gray-900/60 p-3 rounded-xl space-y-1.5 text-xs text-gray-400">
+            <div class="flex justify-between"><span>Container Port:</span><span class="font-mono text-gray-200">8083</span></div>
+            <div class="flex justify-between"><span>Database:</span><span class="font-mono text-gray-200">attendance_db</span></div>
+            <div class="flex justify-between"><span>Threading:</span><span class="text-gray-200">ThreadPoolExecutor</span></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-xs">04</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Payroll Service</h4>
+                <span class="text-[10px] text-gray-400">Inter-Service REST Client</span>
+              </div>
+            </div>
+            <span id="card-status-pay" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">UP</span>
+          </div>
+          <div class="bg-gray-900/60 p-3 rounded-xl space-y-1.5 text-xs text-gray-400">
+            <div class="flex justify-between"><span>Container Port:</span><span class="font-mono text-gray-200">8084</span></div>
+            <div class="flex justify-between"><span>Database:</span><span class="font-mono text-gray-200">payroll_db</span></div>
+            <div class="flex justify-between"><span>Integration:</span><span class="text-gray-200">REST with Attendance</span></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-xs">DB</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">MySQL 8 Server</h4>
+                <span class="text-[10px] text-gray-400">Isolated Multi-Tenant Databases</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">HEALTHY</span>
+          </div>
+          <div class="bg-gray-900/60 p-3 rounded-xl space-y-1.5 text-xs text-gray-400">
+            <div class="flex justify-between"><span>Port:</span><span class="font-mono text-gray-200">3307 -&gt; 3306</span></div>
+            <div class="flex justify-between"><span>Volume:</span><span class="text-gray-200">mysql_data (Persistent)</span></div>
+            <div class="flex justify-between"><span>Databases:</span><span class="text-gray-200">4 Microservice Schemas</span></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-pink-500/10 text-pink-400 flex items-center justify-center font-bold text-xs">UI</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Reverse Proxy Gateway</h4>
+                <span class="text-[10px] text-gray-400">Nginx Alpine Web Portal</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">PORT 3000</span>
+          </div>
+          <div class="bg-gray-900/60 p-3 rounded-xl space-y-1.5 text-xs text-gray-400">
+            <div class="flex justify-between"><span>Access:</span><span class="font-mono text-gray-200">http://localhost:3000</span></div>
+            <div class="flex justify-between"><span>CORS Mitigation:</span><span class="text-emerald-400">Zero CORS (Native Proxy)</span></div>
+            <div class="flex justify-between"><span>API Routing:</span><span class="text-gray-200">/api/* -&gt; Services</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODALS -->
+  <div id="modal-add-employee" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-gray-700 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2"><i class="fa-solid fa-user-plus text-indigo-400"></i><span>Add New Employee</span></h3>
+        <button onclick="closeModal('modal-add-employee')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleCreateEmployee(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-gray-300 mb-1">Full Name</label>
+          <input type="text" id="new-emp-name" required placeholder="e.g. Alex Morgan" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-1">Email Address</label>
+          <input type="email" id="new-emp-email" required placeholder="e.g. alex.morgan@unifyhr.com" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-300 mb-1">Department</label>
+            <select id="new-emp-dept" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+              <option value="Engineering">Engineering</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Finance">Finance</option>
+              <option value="Operations">Operations</option>
+              <option value="Product">Product</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1">Designation</label>
+            <input type="text" id="new-emp-desig" required placeholder="e.g. Senior Engineer" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-300 mb-1">Base Salary ($)</label>
+            <input type="number" id="new-emp-salary" required value="85000" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1">Status</label>
+            <select id="new-emp-status" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+          </div>
+        </div>
+        <div class="pt-3 flex space-x-2">
+          <button type="button" onclick="closeModal('modal-add-employee')" class="flex-1 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition">Cancel</button>
+          <button type="submit" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition">Create Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-mark-attendance" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-6 border border-gray-700 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2"><i class="fa-solid fa-calendar-plus text-emerald-400"></i><span>Log Attendance</span></h3>
+        <button onclick="closeModal('modal-mark-attendance')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleMarkAttendance(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-gray-300 mb-1">Employee ID</label>
+          <input type="number" id="mark-att-empid" required placeholder="e.g. 1" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-1">Attendance Status</label>
+          <select id="mark-att-status" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+            <option value="PRESENT">PRESENT</option>
+            <option value="ABSENT">ABSENT</option>
+          </select>
+        </div>
+        <div class="pt-3 flex space-x-2">
+          <button type="button" onclick="closeModal('modal-mark-attendance')" class="flex-1 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition">Cancel</button>
+          <button type="submit" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Save Attendance</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-generate-payroll" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-gray-700 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2"><i class="fa-solid fa-file-invoice-dollar text-purple-400"></i><span>Generate Net Pay</span></h3>
+        <button onclick="closeModal('modal-generate-payroll')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleGeneratePayroll(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-gray-300 mb-1">Employee ID</label>
+          <input type="number" id="pay-gen-empid" required placeholder="e.g. 1" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-1">Pay Period</label>
+          <input type="text" id="pay-gen-period" placeholder="e.g. 2026-09" value="2026-09" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="p-3 bg-purple-950/20 border border-purple-900/40 rounded-xl text-[11px] text-purple-300">
+          <i class="fa-solid fa-circle-info mr-1"></i>
+          Payroll Service will dynamically call Attendance Service to verify ABSENT records and compute deductions automatically.
+        </div>
+        <div class="pt-3 flex space-x-2">
+          <button type="button" onclick="closeModal('modal-generate-payroll')" class="flex-1 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 transition">Cancel</button>
+          <button type="submit" class="flex-1 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold transition">Calculate &amp; Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    const API_BASE = {
+      auth: '/api/auth',
+      employee: '/api/employees',
+      attendance: '/api/attendance',
+      payroll: '/api/payroll'
+    };
+
+    let currentUser = {
+      username: 'load_admin',
+      role: 'ADMIN',
+      token: ''
+    };
+
+    let allEmployees = [];
+    let filteredEmployees = [];
+    let currentEmployeePage = 1;
+    const EMPLOYEES_PER_PAGE = 12;
+
+    let departmentChart = null;
+    let attendanceChart = null;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await quickLogin('load_admin', 'Password123!', 'ADMIN');
+      setupHealthPolling();
+      await loadEmployees();
+      await loadAttendance();
+      initCharts();
+    });
+
+    async function quickLogin(username, password, role) {
+      try {
+        const resp = await fetch(`${API_BASE.auth}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        if (!resp.ok) {
+          showToast(`Login failed: ${resp.status}`, 'error');
+          return;
+        }
+        const data = await resp.json();
+        currentUser = {
+          username: username,
+          role: data.role || role,
+          token: data.token
+        };
+        renderUserHeader();
+        showToast(`Authenticated as ${currentUser.username} (${currentUser.role})`, 'success');
+      } catch (err) {
+        showToast(`Auth error: ${err.message}`, 'error');
+      }
+    }
+
+    function renderUserHeader() {
+      const container = document.getElementById('auth-status-container');
+      const roleColor = currentUser.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' :
+                        currentUser.role === 'HR' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
+                        'bg-amber-500/20 text-amber-300 border-amber-500/30';
+
+      container.innerHTML = `
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow">
+            ${currentUser.username.substring(0, 2).toUpperCase()}
+          </div>
+          <div class="hidden sm:block text-left">
+            <div class="text-xs font-bold text-gray-200">${currentUser.username}</div>
+            <span class="inline-block px-1.5 py-0.2 text-[9px] font-bold rounded-md border ${roleColor}">${currentUser.role}</span>
+          </div>
+        </div>
+        <div class="relative group">
+          <button class="px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium border border-gray-700 transition flex items-center space-x-1">
+            <span>Switch Role</span>
+            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </button>
+          <div class="absolute right-0 mt-1 w-44 glass-card rounded-xl shadow-2xl p-1.5 hidden group-hover:block z-50 text-xs space-y-1">
+            <button onclick="quickLogin('load_admin', 'Password123!', 'ADMIN')" class="w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-800 text-gray-200 flex items-center justify-between">
+              <span>Admin</span><span class="text-[10px] text-purple-400 font-bold">ADMIN</span>
+            </button>
+            <button onclick="quickLogin('load_hr', 'Password123!', 'HR')" class="w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-800 text-gray-200 flex items-center justify-between">
+              <span>HR Manager</span><span class="text-[10px] text-blue-400 font-bold">HR</span>
+            </button>
+            <button onclick="quickLogin('load_emp', 'Password123!', 'EMPLOYEE')" class="w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-800 text-gray-200 flex items-center justify-between">
+              <span>Standard Employee</span><span class="text-[10px] text-amber-400 font-bold">EMPLOYEE</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function setupHealthPolling() {
+      const checkHealth = async () => {
+        const services = [
+          { key: 'auth', url: '/api/health/auth', dot: 'health-auth-dot', card: 'card-status-auth' },
+          { key: 'emp', url: '/api/health/employee', dot: 'health-emp-dot', card: 'card-status-emp' },
+          { key: 'att', url: '/api/health/attendance', dot: 'health-att-dot', card: 'card-status-att' },
+          { key: 'pay', url: '/api/health/payroll', dot: 'health-pay-dot', card: 'card-status-pay' }
+        ];
+
+        for (const s of services) {
+          try {
+            const resp = await fetch(s.url);
+            const dotEl = document.getElementById(s.dot);
+            const cardEl = document.getElementById(s.card);
+            if (resp.ok) {
+              if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+              if (cardEl) { cardEl.textContent = 'UP'; cardEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'; }
+            } else {
+              if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-rose-500';
+              if (cardEl) { cardEl.textContent = 'DOWN'; cardEl.className = 'px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20'; }
+            }
+          } catch {
+            const dotEl = document.getElementById(s.dot);
+            if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-rose-500';
+          }
+        }
+      };
+      checkHealth();
+      setInterval(checkHealth, 15000);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-indigo-600/90', 'text-white');
+        btn.classList.add('text-gray-400');
+      });
+
+      const activeView = document.getElementById(`view-${tabId}`);
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-indigo-600/90', 'text-white');
+        activeBtn.classList.remove('text-gray-400');
+      }
+
+      if (tabId === 'employees') renderEmployeesTable();
+      if (tabId === 'attendance') loadAttendance();
+    }
+
+    async function loadEmployees() {
+      try {
+        const resp = await fetch(API_BASE.employee, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        if (resp.ok) {
+          allEmployees = await resp.json();
+          filteredEmployees = [...allEmployees];
+          document.getElementById('kpi-total-employees').textContent = allEmployees.length.toLocaleString();
+          renderEmployeesTable();
+          updateCharts();
+        }
+      } catch (err) {
+        console.error('Failed to load employees:', err);
+      }
+    }
+
+    function renderEmployeesTable() {
+      const tbody = document.getElementById('employees-table-body');
+      const start = (currentEmployeePage - 1) * EMPLOYEES_PER_PAGE;
+      const end = start + EMPLOYEES_PER_PAGE;
+      const pageData = filteredEmployees.slice(start, end);
+
+      document.getElementById('emp-page-start').textContent = filteredEmployees.length === 0 ? 0 : start + 1;
+      document.getElementById('emp-page-end').textContent = Math.min(end, filteredEmployees.length);
+      document.getElementById('emp-page-total').textContent = filteredEmployees.length;
+
+      document.getElementById('emp-prev-btn').disabled = currentEmployeePage <= 1;
+      document.getElementById('emp-next-btn').disabled = end >= filteredEmployees.length;
+
+      if (pageData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-gray-500">No employee records found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = pageData.map(emp => `
+        <tr class="hover:bg-gray-800/40 transition">
+          <td class="py-3 px-4 font-mono text-indigo-400 font-semibold">#${emp.id}</td>
+          <td class="py-3 px-4">
+            <div class="font-medium text-white">${emp.name}</div>
+            <div class="text-[10px] text-gray-400">${emp.email}</div>
+          </td>
+          <td class="py-3 px-4 text-gray-300">${emp.department}</td>
+          <td class="py-3 px-4 text-gray-300">${emp.designation}</td>
+          <td class="py-3 px-4 font-mono text-emerald-400">$${Number(emp.salary || 0).toLocaleString()}</td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${emp.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-gray-700 text-gray-400'}">
+              ${emp.status}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right space-x-1.5">
+            <button onclick="quickMarkAttendance(${emp.id})" title="Log Attendance" class="p-1.5 rounded-lg bg-gray-800 hover:bg-emerald-600/30 text-emerald-400 transition"><i class="fa-solid fa-calendar-check"></i></button>
+            <button onclick="quickGeneratePayroll(${emp.id})" title="Generate Payroll" class="p-1.5 rounded-lg bg-gray-800 hover:bg-purple-600/30 text-purple-400 transition"><i class="fa-solid fa-dollar-sign"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterEmployees() {
+      const q = document.getElementById('employee-search-input').value.toLowerCase();
+      const dept = document.getElementById('department-filter').value;
+
+      filteredEmployees = allEmployees.filter(emp => {
+        const matchesQuery = !q || emp.name.toLowerCase().includes(q) || emp.email.toLowerCase().includes(q) || emp.designation.toLowerCase().includes(q);
+        const matchesDept = dept === 'ALL' || emp.department === dept;
+        return matchesQuery && matchesDept;
+      });
+      currentEmployeePage = 1;
+      renderEmployeesTable();
+    }
+
+    function prevEmployeePage() {
+      if (currentEmployeePage > 1) { currentEmployeePage--; renderEmployeesTable(); }
+    }
+    function nextEmployeePage() {
+      if (currentEmployeePage * EMPLOYEES_PER_PAGE < filteredEmployees.length) { currentEmployeePage++; renderEmployeesTable(); }
+    }
+
+    async function handleCreateEmployee(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('new-emp-name').value,
+        email: document.getElementById('new-emp-email').value,
+        department: document.getElementById('new-emp-dept').value,
+        designation: document.getElementById('new-emp-desig').value,
+        salary: Number(document.getElementById('new-emp-salary').value),
+        status: document.getElementById('new-emp-status').value
+      };
+
+      try {
+        const resp = await fetch(API_BASE.employee, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (resp.status === 403) {
+          showToast('RBAC Denied: Only ADMIN and HR roles can create employee records!', 'error');
+          return;
+        }
+
+        if (resp.ok) {
+          const created = await resp.json();
+          allEmployees.unshift(created);
+          filteredEmployees.unshift(created);
+          renderEmployeesTable();
+          closeModal('modal-add-employee');
+          showToast(`Employee #${created.id} created successfully!`, 'success');
+        } else {
+          showToast(`Failed: ${resp.status}`, 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadAttendance() {
+      try {
+        const resp = await fetch(API_BASE.attendance, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        if (resp.ok) {
+          const records = await resp.json();
+          renderAttendanceTable(records);
+        }
+      } catch (err) {
+        console.error('Attendance fetch error:', err);
+      }
+    }
+
+    function renderAttendanceTable(records) {
+      const tbody = document.getElementById('attendance-table-body');
+      if (!records || records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-gray-500">No attendance logs logged yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = records.slice(0, 30).map(rec => `
+        <tr class="hover:bg-gray-800/40 transition">
+          <td class="py-2.5 px-4 font-mono text-gray-400">#${rec.id}</td>
+          <td class="py-2.5 px-4 font-mono text-white font-semibold">Employee #${rec.employeeId}</td>
+          <td class="py-2.5 px-4 text-gray-300">${rec.date}</td>
+          <td class="py-2.5 px-4">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${rec.status === 'PRESENT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+              ${rec.status}
+            </span>
+          </td>
+          <td class="py-2.5 px-4 text-gray-400">${rec.markedBy || 'AUTO-WORKER'}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function handleMarkAttendance(e) {
+      e.preventDefault();
+      const empId = Number(document.getElementById('mark-att-empid').value);
+      const status = document.getElementById('mark-att-status').value;
+
+      try {
+        const resp = await fetch(`${API_BASE.attendance}/mark`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify({ employeeId: empId, status })
+        });
+
+        if (resp.status === 403) {
+          showToast('RBAC Denied: Only ADMIN and HR roles can mark attendance!', 'error');
+          return;
+        }
+
+        if (resp.ok) {
+          closeModal('modal-mark-attendance');
+          showToast(`Marked Employee #${empId} as ${status}!`, 'success');
+          loadAttendance();
+        } else {
+          showToast(`Error ${resp.status}`, 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function quickMarkAttendance(empId) {
+      document.getElementById('mark-att-empid').value = empId;
+      openModal('modal-mark-attendance');
+    }
+
+    async function triggerAbsenteeJob() {
+      try {
+        showToast('Initiating multithreaded absentee background scheduler...', 'info');
+        const resp = await fetch(`${API_BASE.attendance}/trigger-absentee-job`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        if (resp.ok) {
+          showToast(`ExecutorService Activated: Auto-marking absentee records without thread blocking!`, 'success');
+          setTimeout(loadAttendance, 1500);
+        } else {
+          showToast(`Worker trigger failed: ${resp.status}`, 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function handleGeneratePayroll(e) {
+      e.preventDefault();
+      const empId = document.getElementById('pay-gen-empid').value;
+      const period = document.getElementById('pay-gen-period').value;
+
+      try {
+        const resp = await fetch(`${API_BASE.payroll}/generate/${empId}?payPeriod=${encodeURIComponent(period)}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+
+        if (resp.status === 403) {
+          showToast('RBAC Denied: Only ADMIN and HR can generate payroll slips!', 'error');
+          return;
+        }
+
+        if (resp.ok) {
+          const data = await resp.json();
+          closeModal('modal-generate-payroll');
+          showToast(`Payroll generated for #${empId}! Net Pay: $${data.netPay.toLocaleString()}`, 'success');
+          appendPayrollRow(data);
+          switchTab('payroll');
+        } else {
+          showToast(`Failed to generate payroll: ${resp.status}`, 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function quickGeneratePayroll(empId) {
+      document.getElementById('pay-gen-empid').value = empId;
+      openModal('modal-generate-payroll');
+    }
+
+    async function searchEmployeePayroll() {
+      const empId = document.getElementById('payroll-search-emp-id').value;
+      if (!empId) return;
+      try {
+        const resp = await fetch(`${API_BASE.payroll}/${empId}`, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        if (resp.ok) {
+          const records = await resp.json();
+          const tbody = document.getElementById('payroll-table-body');
+          if (records.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-gray-500">No payroll records for Employee #${empId}.</td></tr>`;
+          } else {
+            tbody.innerHTML = records.map(r => `
+              <tr class="hover:bg-gray-800/40 transition">
+                <td class="py-2.5 px-4 font-mono text-gray-400">#${r.id}</td>
+                <td class="py-2.5 px-4 font-mono text-white font-semibold">Employee #${r.employeeId}</td>
+                <td class="py-2.5 px-4 text-gray-300">${r.payPeriod}</td>
+                <td class="py-2.5 px-4 font-mono text-gray-300">$${r.baseSalary.toLocaleString()}</td>
+                <td class="py-2.5 px-4 font-mono text-rose-400">-$${r.deductions.toLocaleString()}</td>
+                <td class="py-2.5 px-4 font-mono font-bold text-emerald-400">$${r.netPay.toLocaleString()}</td>
+                <td class="py-2.5 px-4 text-gray-400">${new Date(r.processedAt).toLocaleDateString()}</td>
+              </tr>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function appendPayrollRow(r) {
+      const tbody = document.getElementById('payroll-table-body');
+      const row = `
+        <tr class="hover:bg-gray-800/40 transition bg-indigo-950/20">
+          <td class="py-2.5 px-4 font-mono text-indigo-400">#${r.id}</td>
+          <td class="py-2.5 px-4 font-mono text-white font-semibold">Employee #${r.employeeId}</td>
+          <td class="py-2.5 px-4 text-gray-300">${r.payPeriod}</td>
+          <td class="py-2.5 px-4 font-mono text-gray-300">$${r.baseSalary.toLocaleString()}</td>
+          <td class="py-2.5 px-4 font-mono text-rose-400">-$${r.deductions.toLocaleString()}</td>
+          <td class="py-2.5 px-4 font-mono font-bold text-emerald-400">$${r.netPay.toLocaleString()}</td>
+          <td class="py-2.5 px-4 text-gray-400">${new Date(r.processedAt).toLocaleDateString()}</td>
+        </tr>
+      `;
+      tbody.insertAdjacentHTML('afterbegin', row);
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function openAddEmployeeModal() { openModal('modal-add-employee'); }
+    function openMarkAttendanceModal() { openModal('modal-mark-attendance'); }
+    function openGeneratePayrollModal() { openModal('modal-generate-payroll'); }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = type === 'success' ? 'bg-emerald-950 border-emerald-700 text-emerald-200' :
+                     type === 'error' ? 'bg-rose-950 border-rose-700 text-rose-200' :
+                     'bg-indigo-950 border-indigo-700 text-indigo-200';
+      const icon = type === 'success' ? 'fa-circle-check' :
+                   type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+
+      toast.className = `px-4 py-3 rounded-xl border ${colors} shadow-2xl text-xs flex items-center space-x-2.5 transition transform duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function initCharts() {
+      const ctxDept = document.getElementById('chart-departments').getContext('2d');
+      departmentChart = new Chart(ctxDept, {
+        type: 'bar',
+        data: {
+          labels: ['Engineering', 'HR', 'Finance', 'Operations', 'Product'],
+          datasets: [{
+            label: 'Headcount',
+            data: [200, 200, 200, 200, 200],
+            backgroundColor: ['#6366f1', '#a855f7', '#06b6d4', '#10b981', '#f59e0b'],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', font: { size: 11 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', font: { size: 11 } } }
+          }
+        }
+      });
+
+      const ctxAtt = document.getElementById('chart-attendance').getContext('2d');
+      attendanceChart = new Chart(ctxAtt, {
+        type: 'doughnut',
+        data: {
+          labels: ['Present', 'Absent'],
+          datasets: [{
+            data: [98, 2],
+            backgroundColor: ['#10b981', '#f43f5e'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 } } } },
+          cutout: '72%'
+        }
+      });
+    }
+
+    function updateCharts() {
+      if (!departmentChart || allEmployees.length === 0) return;
+      const counts = { 'Engineering': 0, 'Human Resources': 0, 'Finance': 0, 'Operations': 0, 'Product': 0 };
+      allEmployees.forEach(e => {
+        if (counts[e.department] !== undefined) counts[e.department]++;
+      });
+      departmentChart.data.datasets[0].data = Object.values(counts);
+      departmentChart.update();
+    }
+  </script>
+</body>
+</html>

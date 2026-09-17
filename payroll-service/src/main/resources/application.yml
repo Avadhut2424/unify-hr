@@ -1,0 +1,43 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  application:
+    name: payroll-service
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/payroll_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:rootpassword}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+auth:
+  service:
+    url: ${AUTH_SERVICE_URL:http://auth-service:8081}
+
+employee:
+  service:
+    url: ${EMPLOYEE_SERVICE_URL:http://employee-service:8082}
+
+attendance:
+  service:
+    url: ${ATTENDANCE_SERVICE_URL:http://attendance-service:8083}
+
+payroll:
+  deduction-per-absent-day: 1000.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+

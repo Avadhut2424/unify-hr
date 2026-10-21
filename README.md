@@ -33,14 +33,14 @@ A high-throughput, modular enterprise HR and Payroll management platform built o
 
 ```mermaid
 graph TD
-    Client([Web Browser / Client]) -->|Port 3000| NGINX[Nginx Reverse Proxy Gateway]
+    Client(["Web Browser / Client"]) -->|Port 3000| NGINX["Nginx Reverse Proxy Gateway"]
 
     subgraph "API Gateway Layer (:3000)"
-        NGINX -->|/| StaticUI[Modern Web Dashboard]
-        NGINX -->|/api/auth/*| AuthSvc[Auth Service :8081]
-        NGINX -->|/api/employees/*| EmpSvc[Employee Service :8082]
-        NGINX -->|/api/attendance/*| AttSvc[Attendance Service :8083]
-        NGINX -->|/api/payroll/*| PaySvc[Payroll Service :8084]
+        NGINX -->|/| StaticUI["Modern Web Dashboard"]
+        NGINX -->|/api/auth/*| AuthSvc["Auth Service (:8081)"]
+        NGINX -->|/api/employees/*| EmpSvc["Employee Service (:8082)"]
+        NGINX -->|/api/attendance/*| AttSvc["Attendance Service (:8083)"]
+        NGINX -->|/api/payroll/*| PaySvc["Payroll Service (:8084)"]
     end
 
     subgraph "Microservices Cluster (Spring Boot 3 + Spring Security)"
@@ -52,14 +52,14 @@ graph TD
         PaySvc -->|Cross-lookup Absent Days| AttSvc
 
         subgraph "Asynchronous Workers"
-            AttSvc -->|Cron Trigger| Scheduler[@Scheduled Timer]
-            Scheduler -->|Delegate Tasks| ThreadPool[ExecutorService Thread Pool]
-            ThreadPool -->|Non-blocking Batch Mark| AbsentLog[Auto-mark Absentees]
+            AttSvc -->|Cron Trigger| Scheduler["Scheduled Background Timer"]
+            Scheduler -->|Delegate Tasks| ThreadPool["ExecutorService Thread Pool"]
+            ThreadPool -->|Non-blocking Batch Mark| AbsentLog["Auto-mark Absentees"]
         end
     end
 
     subgraph "Persistence Layer (MySQL 8.0 Engine)"
-        AuthSvc -->|auth_db| MySQL[(MySQL Container)]
+        AuthSvc -->|auth_db| MySQL[("MySQL Container")]
         EmpSvc -->|employee_db| MySQL
         AttSvc -->|attendance_db| MySQL
         PaySvc -->|payroll_db| MySQL

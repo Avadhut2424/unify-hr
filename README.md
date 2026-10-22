@@ -1,8 +1,8 @@
 # UnifyHR — Enterprise Microservices Employee & Payroll Platform
 
-[![CI/CD Pipeline](https://github.com/Avadhut-2424/unify-hr/actions/workflows/ci.yml/badge.svg)](https://github.com/Avadhut-2424/unify-hr/actions/workflows/ci.yml)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Avadhut-2424/unify-hr/actions)
-[![Coverage](https://img.shields.io/badge/coverage->=90%25-brightgreen)](https://github.com/Avadhut-2424/unify-hr)
+[![CI/CD Pipeline](https://github.com/Avadhut2424/unify-hr/actions/workflows/ci.yml/badge.svg)](https://github.com/Avadhut2424/unify-hr/actions/workflows/ci.yml)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Avadhut2424/unify-hr/actions)
+[![Coverage](https://img.shields.io/badge/coverage->=90%25-brightgreen)](https://github.com/Avadhut2424/unify-hr)
 [![Java 17](https://img.shields.io/badge/Java-17-orange.svg)](https://adoptium.net)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-v3.8-blue.svg)](https://www.docker.com/)
@@ -109,7 +109,7 @@ The system loads environment settings directly from `.env`. A complete configura
 #### Option A: Full Microservices Docker Cluster
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Avadhut-2424/unify-hr.git
+git clone https://github.com/Avadhut2424/unify-hr.git
 cd unify-hr
 
 # 2. Build and launch all 6 containers in detached mode
